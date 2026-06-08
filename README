@@ -13,3 +13,34 @@ This project will be built incrementally each week.
 - git commit  
 - git push
 
+
+week 4
+# RAG Project
+
+## What I set up this week
+
+- Created a Python virtual environment (`venv`)
+- Installed project dependencies using `requirements.txt`
+- Set up environment variable management using `.env`
+- Installed and configured FastAPI and Uvicorn
+- Verified backend server runs successfully using Uvicorn
+- Confirmed `.env` file loads the `GEMINI_API_KEY` securely
+
+## Purpose of `rag_app.py`
+
+The `rag_app.py` file is the entry point of the backend application.
+
+At this stage, it:
+- Loads environment variables from `.env`
+- Reads the `GEMINI_API_KEY`
+- Confirms the backend server runs using FastAPI
+- Provides a `/health` endpoint to verify the server is working
+
+No Gemini or RAG logic has been implemented yet — this file is currently used for environment and server setup validation.
+
+## Questions / Uncertainties
+
+- How the RAG pipeline will be structured in later stages
+- How Gemini API will integrate into FastAPI routes
+- Best practices for storing embeddings and retrieval logic
+- How the backend will scale as features are added
