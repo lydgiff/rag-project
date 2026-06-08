@@ -44,3 +44,28 @@ No Gemini or RAG logic has been implemented yet — this file is currently used 
 - How Gemini API will integrate into FastAPI routes
 - Best practices for storing embeddings and retrieval logic
 - How the backend will scale as features are added
+
+
+week 5
+# RAG Project – Week 5 Setup
+
+## What this project does
+
+This project is a FastAPI backend that connects to the Gemini API and tests basic AI model responses. At this stage, we are not implementing retrieval-augmented generation (RAG) yet. We are only verifying API connectivity and model responses.
+
+---
+
+## /test-gemini endpoint
+
+The `/test-gemini` endpoint:
+
+- Sends a hardcoded prompt to the Gemini model
+- Calls the Gemini API using the `google-genai` SDK
+- Returns the model’s text response in JSON format
+
+Example output:
+```json
+{
+  "prompt": "Explain what a large language model is in one paragraph.",
+  "response": "..."
+}
