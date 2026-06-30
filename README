@@ -69,3 +69,25 @@ Example output:
   "prompt": "Explain what a large language model is in one paragraph.",
   "response": "..."
 }
+
+
+week 6
+## Week 6: Multi-Step Gemini Execution
+
+This project now uses a multi-step workflow in the `/test-gemini` endpoint.
+
+### Step 1: Generate an Outline
+
+The first Gemini API call asks the model to create a short three-point outline explaining what a large language model is. The outline is stored in a variable and can be viewed in the server logs for debugging.
+
+### Step 2: Expand the Outline
+
+The second Gemini API call uses the outline from the first step as input and expands it into a complete paragraph. Only the final paragraph is returned to the client.
+
+### Why the Steps Are Separated
+
+Separating the workflow into two AI calls makes the process easier to understand, debug, and extend. It also demonstrates how the output from one AI call can be reused as the input for another, which is a common pattern in AI applications such as RAG, validation, and content refinement.
+
+### Challenges
+
+The main challenge was learning how to reuse the output from the first Gemini API call in a second call. Saving the first response in a variable made it straightforward to construct the second prompt and generate the final response.

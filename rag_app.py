@@ -30,17 +30,36 @@ def test_gemini():
     # Create Gemini client
     client = genai.Client(api_key=GEMINI_API_KEY)
 
-    # Hardcoded prompt (no user input yet)
-    prompt = "Explain what a large language model is in one paragraph."
+    try:
+        # STEP 1: Generate an outline
+        outline_response = client.models.generate_content(
+            model="models/gemini-2.5-flash",
+            contents="Create a 3-point outline explaining what a large language model is."
+        )
 
-    # Call Gemini (USING YOUR AVAILABLE MODEL)
-    response = client.models.generate_content(
-        model="models/gemini-2.0-flash",
-        contents=prompt
-    )
+        outline = outline_response.text
 
-    # Return API response safely
-    return {
-        "prompt": prompt,
-        "response": response.text
-    }
+        # Optional: print the outline for debugging
+        print("Generated outline:")
+        print(outline)
+
+        # STEP 2: Expand the outline into a paragraph
+        final_response = client.models.generate_content(
+            model="models/gemini-2.5-flash",
+            contents=f"""
+Use the following outline to write one clear paragraph.
+
+Outline:
+{outline}
+"""
+        )
+
+        # Return only the final response
+        return {
+            "response": final_response.text
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
