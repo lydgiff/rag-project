@@ -14,6 +14,7 @@ This project will be built incrementally each week.
 - git push
 
 
+
 week 4
 # RAG Project
 
@@ -46,6 +47,7 @@ No Gemini or RAG logic has been implemented yet — this file is currently used 
 - How the backend will scale as features are added
 
 
+
 week 5
 # RAG Project – Week 5 Setup
 
@@ -71,6 +73,7 @@ Example output:
 }
 
 
+
 week 6
 ## Week 6: Multi-Step Gemini Execution
 
@@ -91,3 +94,16 @@ Separating the workflow into two AI calls makes the process easier to understand
 ### Challenges
 
 The main challenge was learning how to reuse the output from the first Gemini API call in a second call. Saving the first response in a variable made it straightforward to construct the second prompt and generate the final response.
+
+
+
+## Week 7
+
+### Input Validation
+The application validates user input before sending it to the Gemini model. It checks that the question is not empty, is at least 5 characters long, and is no more than 500 characters long.
+
+### Output Validation
+The application validates the AI's response before returning it to the user. It checks that the response is not empty and contains enough information to be useful.
+
+### AI Response Review
+After the first Gemini model generates a response, a second Gemini model call reviews and improves the response if needed. This helps provide clearer and more complete answers.
