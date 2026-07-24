@@ -30,7 +30,7 @@ class ConversationHistory:
         """Add a message to the history. role is "user" or "assistant"."""
         self.messages.append({"role": role, "content": content})
 
-    def get_formatted_history(self):
+    
         """
         Format recent messages as a plain-text string to paste into an LLM prompt.
 
@@ -43,26 +43,19 @@ class ConversationHistory:
               Assistant: Python is a high-level programming language...
               User: Can you give an example?
         """
-        # TODO (Week 11): Build the formatted conversation string.
-        #
-        # --- The RAG concept ---
-        # We're about to paste this text directly into the Gemini prompt.
-        # The format matters: the LLM needs to clearly see who said what.
-        # We label each message "User:" or "Assistant:" so the model
-        # understands the back-and-forth structure of the conversation.
-        #
-        # Steps:
-        #   1. Get the most recent messages:
-        #      recent = self.get_recent(MAX_HISTORY_TURNS * 2)
-        #      (Each "turn" = 1 user message + 1 assistant reply = 2 items)
-        #
-        #   2. For each message in recent, build a line:
-        #      - If message["role"] == "user"      → "User: {message['content']}"
-        #      - If message["role"] == "assistant"  → "Assistant: {message['content']}"
-        #
-        #   3. Join all lines with "\n" and return the result.
-        #
-        return ""  # replace this with your implementation
+    def get_formatted_history(self):
+        recent = self.get_recent(MAX_HISTORY_TURNS * 2)
+
+        formatted_lines = []
+
+        for message in recent:
+            if message["role"] == "user":
+                formatted_lines.append(f"User: {message['content']}")
+            elif message["role"] == "assistant":
+                formatted_lines.append(f"Assistant: {message['content']}")
+
+        return "\n".join(formatted_lines)
+
 
     def get_recent(self, n):
         """Return the last n messages."""

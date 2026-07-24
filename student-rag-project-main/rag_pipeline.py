@@ -86,21 +86,37 @@ def generate_answer(query, context_docs, conversation_history=None):
         [f"Document {i+1}: {doc}" for i, doc in enumerate(context_docs)]
     )
 
-    # ── Week 11 TODO ──────────────────────────────────────────────────────────
+
+    # ── Week 11 TODO ─────────────────────────────────────────────────────────
     # Add conversation history to the prompt.
     #
     # The RAG concept: LLMs have no memory between API calls. To support
     # follow-up questions, we paste the prior conversation directly into the
     # prompt so the model can see what was already discussed.
-    #
-    # If conversation_history is not None and len(conversation_history) > 0:
-    #   history_text = conversation_history.get_formatted_history()
-    #   Set history_section to: f"\nPrevious conversation:\n{history_text}\n"
-    # Otherwise set history_section = ""
-    #
-    # Then include {history_section} in the prompt string below (already shown).
-    # ─────────────────────────────────────────────────────────────────────────
-    history_section = ""  # Week 11: replace with conversation history logic
+
+    
+    history_section = ""
+
+    if conversation_history is not None:
+        print(f"History length: {len(conversation_history)}")
+
+    if conversation_history is not None and len(conversation_history) > 0:
+        history_text = conversation_history.get_formatted_history()
+        print("=== HISTORY SENT TO GEMINI ===")
+        print(history_text)
+        print("==============================")
+
+        history_section = f"""
+
+Previous conversation:
+{history_text}
+
+"""
+
+    else:
+        print("=== HISTORY SENT TO GEMINI ===")
+        print("(no history)")
+        print("==============================")
 
     prompt = f"""You are a helpful assistant that answers questions based on the provided context documents.
 
@@ -119,6 +135,7 @@ Instructions:
         contents=prompt,
         config=types.GenerateContentConfig(temperature=TEMPERATURE),
     )
+
     return response.text
 
 
@@ -207,8 +224,8 @@ def run_rag(query, conversation_history=None):
     #   2. grounding  = check_hallucination(answer, documents)
     #   Then replace the placeholder values below with these variables.
     # ─────────────────────────────────────────────────────────────────────────
-    confidence = 0.0  # Week 13: replace with calculate_confidence(distances)
-    grounding = {}    # Week 13: replace with check_hallucination(answer, documents)
+    confidence = calculate_confidence(distances)
+    grounding = check_hallucination(answer, documents)
 
     # ── Week 11 TODO ──────────────────────────────────────────────────────────
     # Save this exchange to conversation history so follow-up questions work.
@@ -221,6 +238,15 @@ def run_rag(query, conversation_history=None):
     #   conversation_history.add_message("user", query)
     #   conversation_history.add_message("assistant", answer)
     # ─────────────────────────────────────────────────────────────────────────
+
+
+    if conversation_history is not None:
+        conversation_history.add_message("user", query)
+        conversation_history.add_message("assistant", answer)
+	
+        print("=== STORED HISTORY ===")
+        print(conversation_history.messages)
+        print("======================")
 
     return {
         "answer": answer,
