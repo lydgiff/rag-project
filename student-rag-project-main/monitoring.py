@@ -16,8 +16,41 @@
 from google import genai
 from google.genai import types
 from config import GEMINI_API_KEY, GEMINI_MODEL
+import csv
+from datetime import datetime
 
 _client = genai.Client(api_key=GEMINI_API_KEY)
+
+
+
+def log_hallucination_check(answer, verdict, confidence):
+    """Save hallucination monitoring results to a CSV log."""
+    log_file = "hallucination_log.csv"
+
+    file_exists = False
+    try:
+        with open(log_file, "r", encoding="utf-8"):
+            file_exists = True
+    except FileNotFoundError:
+        pass
+
+    with open(log_file, "a", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+
+        if not file_exists:
+            writer.writerow([
+                "timestamp",
+                "verdict",
+                "confidence",
+                "answer"
+            ])
+
+        writer.writerow([
+            datetime.now().isoformat(),
+            verdict,
+            confidence,
+            answer
+        ])
 
 
 
@@ -68,6 +101,7 @@ Respond with ONLY one word.
         )
 
         verdict = response.text.strip().upper()
+
 
         if verdict not in ["GROUNDED", "PARTIAL", "HALLUCINATED"]:
             verdict = "PARTIAL"

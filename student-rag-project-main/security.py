@@ -24,9 +24,18 @@ import re
 # Think about phrases like: trying to ignore instructions, claiming a new
 # identity, asking the model to forget its context, etc.
 #
+
 BLOCKED_PATTERNS = [
-    # Add your blocked phrases here (all lowercase)
-    # Example: "ignore previous instructions",
+    "ignore previous instructions",
+    "ignore all previous instructions",
+    "system prompt",
+    "override instructions",
+    "you are now",
+    "act as",
+    "pretend to be",
+    "forget your instructions",
+    "developer instructions",
+    "reveal your prompt",
 ]
 
 # Maximum allowed length for a user query.
@@ -42,30 +51,30 @@ def validate_input(query):
         (True, "")                    — query is safe, proceed
         (False, "error message")      — query is unsafe, show the error
     """
-    # TODO (Week 12): Implement three safety checks.
-    #
-    # --- The RAG/security concept ---
-    # We validate at the system boundary — the moment user input enters our app.
-    # This is called "input validation" and it's a fundamental security principle.
-    # Once bad input reaches the LLM prompt, it's much harder to defend against.
-    #
-    # Check 1 — Empty input:
-    #   If query is empty or only whitespace, the app would send a pointless
-    #   API call. Return: (False, "Please enter a question before submitting.")
-    #
-    # Check 2 — Input too long:
-    #   Long inputs cost more tokens and can be used to flood the context window.
-    #   If len(query) > MAX_QUERY_LENGTH, return:
-    #   (False, f"Your query is too long. Please keep it under {MAX_QUERY_LENGTH} characters.")
-    #
-    # Check 3 — Prompt injection patterns:
-    #   Convert the query to lowercase (query.lower()), then check whether any
-    #   string from BLOCKED_PATTERNS appears inside it.
-    #   If found, return: (False, "Your query contains content that cannot be processed.")
-    #
-    # If all three checks pass, return: (True, "")
-    #
-    return True, ""  # placeholder — replace with your implementation
+
+    # Check 1 — Empty input
+    if not query or not query.strip():
+        return False, "Please enter a question before submitting."
+
+    # Check 2 — Input too long
+    if len(query) > MAX_QUERY_LENGTH:
+        return (
+            False,
+            f"Your query is too long. Please keep it under {MAX_QUERY_LENGTH} characters."
+        )
+
+    # Check 3 — Prompt injection patterns
+    query_lower = query.lower()
+
+    for pattern in BLOCKED_PATTERNS:
+        if pattern in query_lower:
+            return (
+                False,
+                "Your query contains content that cannot be processed."
+            )
+
+    # All checks passed
+    return True, ""
 
 
 def sanitize_input(query):

@@ -31,7 +31,11 @@ from vector_store import add_documents, query_similar
 from data_loader import get_documents, generate_ids
 from conversation import ConversationHistory
 from security import validate_input, sanitize_input
-from monitoring import check_hallucination, calculate_confidence
+from monitoring import (
+    check_hallucination,
+    calculate_confidence,
+    log_hallucination_check,
+)
 from filters import filter_by_threshold, has_relevant_results, get_fallback_response, handle_api_error
 from workflow import rewrite_query
 
@@ -172,6 +176,21 @@ def run_rag(query, conversation_history=None):
     #         "confidence": 0.0, "grounding": {}, "error": error_message}
     #   3. Clean up the query: query = sanitize_input(query)
     # ─────────────────────────────────────────────────────────────────────────
+    # Week 12 - Input Security
+    is_valid, error_message = validate_input(query)
+
+    if not is_valid:
+        return {
+            "answer": error_message,
+            "sources": [],
+            "distances": [],
+            "confidence": 0.0,
+            "grounding": {},
+            "error": error_message,
+        }
+
+    query = sanitize_input(query)
+
 
     # ── Week 15 TODO ──────────────────────────────────────────────────────────
     # Rewrite the query before retrieval to improve embedding quality.
@@ -224,26 +243,28 @@ def run_rag(query, conversation_history=None):
     #   2. grounding  = check_hallucination(answer, documents)
     #   Then replace the placeholder values below with these variables.
     # ─────────────────────────────────────────────────────────────────────────
+    
     confidence = calculate_confidence(distances)
     grounding = check_hallucination(answer, documents)
 
-    # ── Week 11 TODO ──────────────────────────────────────────────────────────
-    # Save this exchange to conversation history so follow-up questions work.
-    #
-    # The RAG concept: we store both sides of the exchange (user question AND
-    # assistant answer) so get_formatted_history() can include both in the
-    # next prompt. Without this step, history is never actually saved.
-    #
-    # Steps (only if conversation_history is not None):
-    #   conversation_history.add_message("user", query)
-    #   conversation_history.add_message("assistant", answer)
-    # ─────────────────────────────────────────────────────────────────────────
+    log_hallucination_check(
+        answer,
+        grounding["verdict"],
+        confidence,
+    )
 
+        # ── Week 11 TODO ──────────────────────────────────────────────────────────
+        # Save this exchange to conversation history so follow-up questions work.
+        #
+        # The RAG concept: we store both sides of the exchange (user question AND
+        # assistant answer) so get_formatted_history() can include both in the
+        # next prompt. Without this step, history is never actually saved.
+        # ─────────────────────────────────────────────────────────────────────────
 
     if conversation_history is not None:
         conversation_history.add_message("user", query)
         conversation_history.add_message("assistant", answer)
-	
+
         print("=== STORED HISTORY ===")
         print(conversation_history.messages)
         print("======================")
@@ -256,7 +277,6 @@ def run_rag(query, conversation_history=None):
         "grounding": grounding,
         "error": "",
     }
-
 
 def get_feature_status():
     """
