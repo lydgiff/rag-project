@@ -210,25 +210,43 @@ def run_rag(query, conversation_history=None):
     # ── Week 10: Core Retrieval — already complete ───────────────────────────
     documents, distances = retrieve_context(query)
 
-    # ── Week 14 TODO ──────────────────────────────────────────────────────────
-    # Filter out documents that aren't similar enough to be useful.
-    #
-    # The RAG concept: ChromaDB always returns results even when nothing is
-    # relevant. Without filtering, we might generate an answer from completely
-    # unrelated documents. The threshold cuts off low-quality matches.
-    #
-    # Steps:
-    #   1. Filter: documents, distances = filter_by_threshold(documents, distances, SIMILARITY_THRESHOLD)
-    #   2. If not has_relevant_results(documents), return a fallback dict:
-    #        {"answer": get_fallback_response(), "sources": [], "distances": [],
-    #         "confidence": 0.0,
-    #         "grounding": {"verdict": "N/A", "is_grounded": True, "warning": ""},
-    #         "error": ""}
-    # ─────────────────────────────────────────────────────────────────────────
+  
+    # ── Week 14: Filtering and Fallback ──────────────────────────────────────
+    documents, distances = filter_by_threshold(
+        documents,
+        distances,
+        SIMILARITY_THRESHOLD,
+    )
 
-    # ── Week 10: Core Generation — already complete ──────────────────────────
-    # Week 14: wrap this in try/except and call handle_api_error(e) on failure
-    answer = generate_answer(query, documents, conversation_history)
+    if not has_relevant_results(documents):
+        return {
+            "answer": get_fallback_response(),
+            "sources": [],
+            "distances": [],
+            "confidence": 0.0,
+            "grounding": {
+                "verdict": "N/A",
+                "is_grounded": True,
+                "warning": "",
+            },
+            "error": "",
+        }
+
+
+      # ── Week 10: Core Generation — already complete ──────────────────────────
+    # Week 14: Graceful error handling
+    try:
+        answer = generate_answer(query, documents, conversation_history)
+    except Exception as e:
+        return {
+            "answer": handle_api_error(e),
+            "sources": documents,
+            "distances": distances,
+            "confidence": 0.0,
+            "grounding": {},
+            "error": str(e),
+        }
+
 
     # ── Week 13 TODO ──────────────────────────────────────────────────────────
     # Monitor the response quality after generation.
