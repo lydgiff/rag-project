@@ -42,10 +42,6 @@ from workflow import rewrite_query
 _client = genai.Client(api_key=GEMINI_API_KEY)
 
 
-# ============================================================
-# WEEK 10: Core RAG — Already complete. Run the app and
-# explore how these three functions work together.
-# ============================================================
 
 def initialize_vector_store():
     """
@@ -90,13 +86,6 @@ def generate_answer(query, context_docs, conversation_history=None):
         [f"Document {i+1}: {doc}" for i, doc in enumerate(context_docs)]
     )
 
-
-    # ── Week 11 TODO ─────────────────────────────────────────────────────────
-    # Add conversation history to the prompt.
-    #
-    # The RAG concept: LLMs have no memory between API calls. To support
-    # follow-up questions, we paste the prior conversation directly into the
-    # prompt so the model can see what was already discussed.
 
     
     history_section = ""
@@ -143,11 +132,6 @@ Instructions:
     return response.text
 
 
-# ============================================================
-# MAIN PIPELINE — run_rag()
-# Each week you'll add one new block to this function.
-# The Week 10 core at the bottom already works.
-# ============================================================
 
 def run_rag(query, conversation_history=None):
     """
@@ -162,20 +146,6 @@ def run_rag(query, conversation_history=None):
       - "error":      Error message (empty string if no error)
     """
 
-    # ── Week 12 TODO ──────────────────────────────────────────────────────────
-    # Add input security before any processing happens.
-    #
-    # The RAG concept: always validate at the system boundary — the moment
-    # user input enters the app, before it touches the LLM or vector store.
-    # Prompt injection can hijack LLM behavior, so we stop bad input here.
-    #
-    # Steps:
-    #   1. Call validate_input(query) → returns (is_valid, error_message)
-    #   2. If not is_valid, return this dict immediately:
-    #        {"answer": error_message, "sources": [], "distances": [],
-    #         "confidence": 0.0, "grounding": {}, "error": error_message}
-    #   3. Clean up the query: query = sanitize_input(query)
-    # ─────────────────────────────────────────────────────────────────────────
     # Week 12 - Input Security
     is_valid, error_message = validate_input(query)
 
@@ -192,25 +162,27 @@ def run_rag(query, conversation_history=None):
     query = sanitize_input(query)
 
 
-    # ── Week 15 TODO ──────────────────────────────────────────────────────────
-    # Rewrite the query before retrieval to improve embedding quality.
-    #
-    # The RAG concept: the phrasing of the query directly affects what
-    # embedding gets produced, which affects what documents get retrieved.
-    # A more specific, well-formed query produces a better embedding.
-    #
-    # Steps:
-    #   1. Get conversation context (if any):
-    #        history_context = ""
-    #        if conversation_history and len(conversation_history) > 0:
-    #            history_context = conversation_history.get_formatted_history()
-    #   2. Rewrite: query = rewrite_query(query, history_context)
-    # ─────────────────────────────────────────────────────────────────────────
+# ── Week 15: Query Rewriting ───────────────────────────────────────────────
+    history_context = ""
+
+    if conversation_history and len(conversation_history) > 0:
+        history_context = conversation_history.get_formatted_history()
+
+    print("=== CONVERSATION CONTEXT ===")
+    print(history_context)
+    print("============================")
+
+    original_query = query
+    query = rewrite_query(query, history_context)
+
+    print("=== WEEK 15 QUERY REWRITE ===")
+    print("Original query:", original_query)
+    print("Rewritten query:", query)
+    print("=============================")
 
     # ── Week 10: Core Retrieval — already complete ───────────────────────────
     documents, distances = retrieve_context(query)
 
-  
     # ── Week 14: Filtering and Fallback ──────────────────────────────────────
     documents, distances = filter_by_threshold(
         documents,
@@ -246,21 +218,6 @@ def run_rag(query, conversation_history=None):
             "grounding": {},
             "error": str(e),
         }
-
-
-    # ── Week 13 TODO ──────────────────────────────────────────────────────────
-    # Monitor the response quality after generation.
-    #
-    # The RAG concept: even with context, LLMs can hallucinate. We use
-    # "LLM-as-judge" — asking Gemini to evaluate its own output against the
-    # source documents. We also convert vector distances into a confidence
-    # score so users know how well the retrieved docs matched the query.
-    #
-    # Steps:
-    #   1. confidence = calculate_confidence(distances)
-    #   2. grounding  = check_hallucination(answer, documents)
-    #   Then replace the placeholder values below with these variables.
-    # ─────────────────────────────────────────────────────────────────────────
     
     confidence = calculate_confidence(distances)
     grounding = check_hallucination(answer, documents)
@@ -271,13 +228,6 @@ def run_rag(query, conversation_history=None):
         confidence,
     )
 
-        # ── Week 11 TODO ──────────────────────────────────────────────────────────
-        # Save this exchange to conversation history so follow-up questions work.
-        #
-        # The RAG concept: we store both sides of the exchange (user question AND
-        # assistant answer) so get_formatted_history() can include both in the
-        # next prompt. Without this step, history is never actually saved.
-        # ─────────────────────────────────────────────────────────────────────────
 
     if conversation_history is not None:
         conversation_history.add_message("user", query)

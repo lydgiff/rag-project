@@ -28,6 +28,7 @@ from vector_store import query_similar
 _client = genai.Client(api_key=GEMINI_API_KEY)
 
 
+
 def rewrite_query(original_query, conversation_context=""):
     """
     Use Gemini to rewrite the user's query for better semantic search.
@@ -40,28 +41,50 @@ def rewrite_query(original_query, conversation_context=""):
     Returns:
         A rewritten query string, or the original if rewriting fails.
     """
-    # TODO (Week 15): Implement query rewriting using Gemini.
-    #
-    # --- The RAG concept ---
-    # Embeddings capture meaning, but they're sensitive to phrasing.
-    # A user might type casually ("how does python deal with dbs?") while
-    # documents are written formally ("Python database connectivity and ORMs").
-    # These two phrasings may not be close in embedding space even though
-    # they mean the same thing. Query rewriting bridges that gap.
-    #
-    # Also important: if the user asks a follow-up like "What else can it do?",
-    # the conversation_context lets you resolve "it" to the right topic.
-    #
-    # Steps:
-    #   1. If conversation_context is not empty, include it in the prompt
-    #   2. Build a prompt asking Gemini to rewrite the question to be more
-    #      specific and technical, suitable for semantic search
-    #   3. Call _client.models.generate_content() with temperature=0.1
-    #      (low temperature = focused rewriting, not creative)
-    #   4. Return response.text.strip() if it's not empty and under 500 chars
-    #   5. Wrap in try/except — if anything fails, return original_query unchanged
-    #
-    return original_query  # placeholder — query passes through unchanged
+    try:
+        context_section = ""
+        if conversation_context:
+            context_section = f"""
+Recent conversation context:
+{conversation_context}
+
+Use this context to resolve references such as "it", "that", or "they".
+"""
+
+        prompt = f"""
+Rewrite the user's question into a clear, specific, technical query
+suitable for semantic search in a knowledge base.
+
+Keep the original meaning. If the question refers to something from the
+conversation, use the conversation context to make the reference explicit.
+
+Do not answer the question. Only return the rewritten query.
+
+{context_section}
+
+User's original question:
+{original_query}
+"""
+
+        response = _client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.1
+            )
+        )
+
+        rewritten_query = response.text.strip()
+
+        if rewritten_query and len(rewritten_query) < 500:
+            return rewritten_query
+
+    except Exception:
+        pass
+
+    return original_query
+
+
 
 
 def decompose_query(query):
@@ -75,6 +98,45 @@ def decompose_query(query):
         A list of sub-question strings (up to 3), or [query] if it's
         already simple or if decomposition fails.
     """
+    try:
+        prompt = f"""
+Determine whether the following question contains multiple distinct
+questions or topics.
+
+If it does, split it into 2-3 simpler, self-contained questions.
+If it does not, return the original question unchanged.
+
+Each question must be on its own line.
+Do not number the questions.
+Do not provide explanations or answers.
+
+Question:
+{query}
+"""
+
+        response = _client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.1
+            )
+        )
+
+        sub_queries = [
+            line.strip()
+            for line in response.text.strip().splitlines()
+            if line.strip() and len(line.strip()) > 5
+        ]
+
+        if sub_queries:
+            return sub_queries[:3]
+
+    except Exception:
+        pass
+
+    return [query]
+
+
     # TODO (Week 15): Implement query decomposition using Gemini.
     #
     # --- The RAG concept ---
